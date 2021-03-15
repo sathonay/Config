@@ -8,8 +8,10 @@ import org.bukkit.plugin.Plugin;
 import java.io.File;
 import java.io.IOException;
 import java.util.Map;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
+import java.util.function.Supplier;
 
 public class Config extends YamlConfiguration {
 
@@ -60,15 +62,7 @@ public class Config extends YamlConfiguration {
 
     public CompletableFuture<Config> saveDefault(Plugin plugin, boolean replace, boolean async) {
         if (async) {
-            return CompletableFuture.supplyAsync(() -> {
-                try {
-                    return saveDefaultConfig(plugin, replace);
-                } catch (RuntimeException exception) {
-                    throw exception;
-                } catch (Exception exception) {
-                    throw new CompletionException(exception);
-                }
-            });
+            return buildCompletableFuture(() -> saveDefaultConfig(plugin, replace));
         } else {
             return CompletableFuture.completedFuture(saveDefaultConfig(plugin, replace));
         }
@@ -84,15 +78,7 @@ public class Config extends YamlConfiguration {
 
     public CompletableFuture<Config> load(boolean async) {
         if (async) {
-            return CompletableFuture.supplyAsync(() -> {
-                try {
-                    return loadConfig();
-                } catch (RuntimeException exception) {
-                    throw exception;
-                } catch (Exception exception) {
-                    throw new CompletionException(exception);
-                }
-            });
+            return buildCompletableFuture(this::loadConfig);
         } else {
             return CompletableFuture.completedFuture(loadConfig());
         }
@@ -116,15 +102,7 @@ public class Config extends YamlConfiguration {
 
     public CompletableFuture<Config> save(boolean async) {
         if (async) {
-            return CompletableFuture.supplyAsync(() -> {
-                try {
-                    return saveConfig();
-                } catch (RuntimeException exception) {
-                    throw exception;
-                } catch (Exception exception) {
-                    throw new CompletionException(exception);
-                }
-            });
+            return buildCompletableFuture(this::saveConfig);
         } else {
             return CompletableFuture.completedFuture(saveConfig());
         }
@@ -161,5 +139,17 @@ public class Config extends YamlConfiguration {
     public Config setFile(String filePath) {
         this.setFile(new File(filePath));
         return this;
+    }
+
+    private CompletableFuture<Config> buildCompletableFuture(Callable<Config> callable) {
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                return callable.call();
+            } catch (RuntimeException exception) {
+                throw exception;
+            } catch (Exception exception) {
+                throw new CompletionException(exception);
+            }
+        });
     }
 }
