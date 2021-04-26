@@ -61,22 +61,25 @@ public class Config extends YamlConfiguration {
     }
 
     public CompletableFuture<Config> saveDefault(Plugin plugin, boolean replace, boolean async) {
-        return buildCompletableFuture(() -> saveDefaultConfig(plugin, replace));
+        return buildCompletableFuture(() -> saveDefaultConfig(plugin, replace), async);
     }
 
     private Config saveDefaultConfig(Plugin plugin, boolean replace) {
+
         if (plugin != null) {
             plugin.saveResource(this.filePath, replace);
             setFile(plugin.getDataFolder() + "/" + filePath);
         }
+
         return this;
     }
 
     public CompletableFuture<Config> load(boolean async) {
-        return buildCompletableFuture(this::loadConfig);
+        return buildCompletableFuture(this::loadConfig, async);
     }
 
     private Config loadConfig() {
+
         if (file.exists()) {
             try {
                 this.load(file);
@@ -84,6 +87,7 @@ public class Config extends YamlConfiguration {
                 e.printStackTrace();
             }
         }
+        
         return this;
     }
 
@@ -97,11 +101,13 @@ public class Config extends YamlConfiguration {
     }
 
     private Config saveConfig() {
+        
         try {
             save(file);
         } catch (IOException e) {
             e.printStackTrace();
         }
+
         return this;
     }
 
