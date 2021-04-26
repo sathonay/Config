@@ -61,11 +61,7 @@ public class Config extends YamlConfiguration {
     }
 
     public CompletableFuture<Config> saveDefault(Plugin plugin, boolean replace, boolean async) {
-        if (async) {
-            return buildCompletableFuture(() -> saveDefaultConfig(plugin, replace));
-        } else {
-            return CompletableFuture.completedFuture(saveDefaultConfig(plugin, replace));
-        }
+        return buildCompletableFuture(() -> saveDefaultConfig(plugin, replace));
     }
 
     private Config saveDefaultConfig(Plugin plugin, boolean replace) {
@@ -77,11 +73,7 @@ public class Config extends YamlConfiguration {
     }
 
     public CompletableFuture<Config> load(boolean async) {
-        if (async) {
-            return buildCompletableFuture(this::loadConfig);
-        } else {
-            return CompletableFuture.completedFuture(loadConfig());
-        }
+        return buildCompletableFuture(this::loadConfig);
     }
 
     private Config loadConfig() {
@@ -101,11 +93,7 @@ public class Config extends YamlConfiguration {
     }
 
     public CompletableFuture<Config> save(boolean async) {
-        if (async) {
-            return buildCompletableFuture(this::saveConfig);
-        } else {
-            return CompletableFuture.completedFuture(saveConfig());
-        }
+        return buildCompletableFuture(this::saveConfig, async);
     }
 
     private Config saveConfig() {
@@ -141,15 +129,20 @@ public class Config extends YamlConfiguration {
         return this;
     }
 
-    private CompletableFuture<Config> buildCompletableFuture(Callable<Config> callable) {
-        return CompletableFuture.supplyAsync(() -> {
-            try {
-                return callable.call();
-            } catch (RuntimeException exception) {
-                throw exception;
-            } catch (Exception exception) {
-                throw new CompletionException(exception);
-            }
-        });
+    private CompletableFuture<Config> buildCompletableFuture(Callable<Config> callable, boolean async) {
+
+        if (async) {
+            return CompletableFuture.supplyAsync(() -> {
+                try {
+                    return callable.call();
+                } catch (RuntimeException exception) {
+                    throw exception;
+                } catch (Exception exception) {
+                    throw new CompletionException(exception);
+                }
+            });
+        }
+
+        return CompletableFuture.completedFuture(callable.call());
     }
 }
