@@ -135,12 +135,12 @@ public class Config extends YamlConfiguration {
         return this;
     }
 
-    private CompletableFuture<Config> buildCompletableFuture(Callable<Config> callable, boolean async) {
+    private CompletableFuture<Config> buildCompletableFuture(Supplier<Config> supplier, boolean async) {
 
         if (async) {
             return CompletableFuture.supplyAsync(() -> {
                 try {
-                    return callable.call();
+                    return supplier.get();
                 } catch (RuntimeException exception) {
                     throw exception;
                 } catch (Exception exception) {
@@ -149,6 +149,6 @@ public class Config extends YamlConfiguration {
             });
         }
 
-        return CompletableFuture.completedFuture(callable.call());
+        return CompletableFuture.completedFuture(supplier.get());
     }
 }
